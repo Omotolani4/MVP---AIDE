@@ -16,7 +16,6 @@ export default function Auth() {
   const [signInPassword, setSignInPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -27,56 +26,65 @@ export default function Auth() {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
 
-  /** AUTH STATE LISTENER */
+  /* ============================
+     AUTH STATE (SINGLE SOURCE)
+     ============================ */
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", session.user.id)
-          .single();
+    let mounted = true;
 
-        setTimeout(() => {
-          if (!profile) {
-            navigate("/quiz-step2");
-          } else {
-            navigate("/dashboard");
-          }
-        }, 100);
+    const handleSession = async (session: any) => {
+      if (!session?.user || !mounted) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("onboarding_complete")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error(error);
+        return;
       }
-    });
 
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        navigate("/dashboard");
+      if (data.onboarding_complete) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/quiz-step2", { replace: true });
       }
     };
 
-    checkSession();
+    supabase.auth.getSession().then(({ data }) => {
+      handleSession(data.session);
+    });
 
-    return () => subscription.unsubscribe();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
-  /** AUTO SCALE */
+  /* ============================
+     AUTO SCALE
+     ============================ */
   useEffect(() => {
     const resize = () => {
       const baseWidth = 1440;
       const baseHeight = 900;
-
-      const scaleX = window.innerWidth / baseWidth;
-      const scaleY = window.innerHeight / baseHeight;
-      const finalScale = Math.min(scaleX, scaleY) * 1.1;
+      const scale =
+        Math.min(
+          window.innerWidth / baseWidth,
+          window.innerHeight / baseHeight
+        ) * 1.05;
 
       document.documentElement.style.setProperty(
         "--auth-scale",
-        String(finalScale)
+        String(scale)
       );
     };
 
@@ -85,7 +93,9 @@ export default function Auth() {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  /** REMEMBER EMAIL */
+  /* ============================
+     REMEMBER EMAIL
+     ============================ */
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
@@ -94,7 +104,9 @@ export default function Auth() {
     }
   }, []);
 
-  /** FADE IN */
+  /* ============================
+     FADE IN ANIMATION
+     ============================ */
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -115,34 +127,33 @@ export default function Auth() {
     return () => observer.disconnect();
   }, [leftControls, rightControls]);
 
-  /** SIGN UP */
+  /* ============================
+     EMAIL SIGN UP
+     ============================ */
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setIsSigningUp(true);
 
     try {
-      const nameParts = fullName.trim().split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
+      const [first_name, ...rest] = fullName.trim().split(" ");
+      const last_name = rest.join(" ");
 
       const { error } = await supabase.auth.signUp({
         email: signUpEmail,
         password: signUpPassword,
         options: {
           emailRedirectTo: `${window.location.origin}/auth`,
-          data: { first_name: firstName, last_name: lastName },
+          data: { first_name, last_name },
         },
       });
 
       if (error) throw error;
 
-      toast({ title: "Account created successfully!" });
-    } catch (error: any) {
-      setIsSigningUp(false);
+      toast({ title: "Account created successfully" });
+    } catch (err: any) {
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -150,7 +161,9 @@ export default function Auth() {
     }
   };
 
-  /** SIGN IN */
+  /* ============================
+     EMAIL SIGN IN
+     ============================ */
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -168,10 +181,10 @@ export default function Auth() {
         : localStorage.removeItem("rememberedEmail");
 
       toast({ title: "Welcome back!" });
-    } catch (error: any) {
+    } catch (err: any) {
       toast({
         title: "Sign in failed",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     } finally {
@@ -179,21 +192,22 @@ export default function Auth() {
     }
   };
 
-  /** GOOGLE SIGN IN (SUPABASE) */
+  /* ============================
+     GOOGLE SIGN IN (SUPABASE)
+     ============================ */
   const handleGoogle = async () => {
     setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth`,
-        },
-      });
 
-      if (error) throw error;
-    } catch (error: any) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+      },
+    });
+
+    if (error) {
       toast({
-        title: "Google Sign In failed",
+        title: "Google sign in failed",
         description: error.message,
         variant: "destructive",
       });
@@ -203,62 +217,95 @@ export default function Auth() {
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 80 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 1.1 },
-    },
-  };
-
-  const fadeItem = {
-    hidden: { opacity: 0, y: 25 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: 0.25 + i * 0.15, duration: 0.7 },
-    }),
+    visible: { opacity: 1, y: 0, transition: { duration: 1 } },
   };
 
   return (
-    <div className="h-screen w-full flex relative bg-white overflow-hidden">
-      {/* LOGO */}
+    <div className="h-screen w-full flex bg-white overflow-hidden">
       <img
         src={aideLogo}
-        onClick={() => navigate("/dashboard")}
-        className="h-16 absolute top-6 left-8 cursor-pointer z-50"
         alt="AIDE logo"
+        onClick={() => navigate("/")}
+        className="h-16 absolute top-6 left-8 cursor-pointer z-50"
       />
 
-      {/* LEFT PANEL */}
+      {/* LEFT */}
       <motion.div
         ref={leftRef}
         variants={sectionVariants}
         initial="hidden"
         animate={leftControls}
-        className="w-[40%] flex flex-col items-center pt-48 p-12 bg-white"
+        className="w-[40%] flex items-center justify-center"
       >
-        {/* ... LEFT CONTENT UNCHANGED ... */}
+        <form
+          onSubmit={handleSignIn}
+          className="w-full max-w-sm space-y-6"
+          style={{ transform: "scale(var(--auth-scale))" }}
+        >
+          <h1 className="text-4xl font-bold text-[#DF1516]">
+            Welcome Back
+          </h1>
+
+          <Input
+            placeholder="Email"
+            value={signInEmail}
+            onChange={(e) => setSignInEmail(e.target.value)}
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={signInPassword}
+            onChange={(e) => setSignInPassword(e.target.value)}
+          />
+
+          <Button className="w-full" disabled={loading}>
+            Sign In
+          </Button>
+        </form>
       </motion.div>
 
-      {/* RIGHT PANEL */}
+      {/* RIGHT */}
       <motion.div
         ref={rightRef}
         variants={sectionVariants}
         initial="hidden"
         animate={rightControls}
-        className="w-[60%] bg-[#DF1516] flex flex-col items-center pt-48 p-16"
+        className="w-[60%] bg-[#DF1516] flex items-center justify-center"
       >
-        <button
-          onClick={handleGoogle}
-          className="flex w-[80%] mx-auto mt-8 mb-6 rounded-none overflow-hidden"
+        <div
+          className="w-full max-w-md space-y-6 text-center"
+          style={{ transform: "scale(var(--auth-scale))" }}
         >
-          <div className="bg-white w-[80px] h-[80px] flex items-center justify-center">
-            <FcGoogle size={42} />
-          </div>
-          <span className="flex-1 h-[80px] bg-white text-[#DF1516] flex items-center justify-center text-[23px] font-bold">
-            Continue With Google
-          </span>
-        </button>
+          <button
+            onClick={handleGoogle}
+            className="flex w-full bg-white text-[#DF1516] font-bold h-14 items-center justify-center gap-4"
+          >
+            <FcGoogle size={28} />
+            Continue with Google
+          </button>
+
+          <form onSubmit={handleSignUp} className="space-y-4">
+            <Input
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+            <Input
+              placeholder="Email"
+              value={signUpEmail}
+              onChange={(e) => setSignUpEmail(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={signUpPassword}
+              onChange={(e) => setSignUpPassword(e.target.value)}
+            />
+            <Button className="w-full bg-white text-[#DF1516]">
+              Create Account
+            </Button>
+          </form>
+        </div>
       </motion.div>
     </div>
   );
