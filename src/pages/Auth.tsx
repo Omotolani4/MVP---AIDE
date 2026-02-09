@@ -220,7 +220,7 @@ export default function Auth() {
         alt="AIDE logo"
       />
 
-      {/* LEFT PANEL */}
+      {/* LEFT PANEL - Sign Up */}
       <motion.div
         ref={leftRef}
         variants={sectionVariants}
@@ -228,11 +228,61 @@ export default function Auth() {
         animate={leftControls}
         className="w-[40%] flex flex-col items-center justify-start pt-48 p-12 bg-white"
       >
-        {/* 🔒 DESIGN UNCHANGED */}
-        {/* ... LEFT CONTENT EXACTLY AS YOU SENT ... */}
+        <motion.h2
+          custom={0}
+          variants={fadeItem}
+          initial="hidden"
+          animate={leftControls}
+          className="text-[55px] font-bold text-[#DF1516] mb-2"
+        >
+          Create Account
+        </motion.h2>
+        <motion.p
+          custom={1}
+          variants={fadeItem}
+          initial="hidden"
+          animate={leftControls}
+          className="text-[21px] text-gray-500 mb-8"
+        >
+          Start your journey with AIDE
+        </motion.p>
+
+        <form onSubmit={handleSignUp} className="w-[80%] space-y-4">
+          <Input
+            type="text"
+            placeholder="Full Name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            className="h-[74px] text-[21px] rounded-none border-gray-300"
+          />
+          <Input
+            type="email"
+            placeholder="Email"
+            value={signUpEmail}
+            onChange={(e) => setSignUpEmail(e.target.value)}
+            required
+            className="h-[74px] text-[21px] rounded-none border-gray-300"
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={signUpPassword}
+            onChange={(e) => setSignUpPassword(e.target.value)}
+            required
+            className="h-[74px] text-[21px] rounded-none border-gray-300"
+          />
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-[74px] text-[23px] font-bold bg-[#DF1516] hover:bg-[#c11213] text-white rounded-none"
+          >
+            {loading ? "Creating..." : "Sign Up"}
+          </Button>
+        </form>
       </motion.div>
 
-      {/* RIGHT PANEL */}
+      {/* RIGHT PANEL - Sign In */}
       <motion.div
         ref={rightRef}
         variants={sectionVariants}
@@ -240,9 +290,82 @@ export default function Auth() {
         animate={rightControls}
         className="w-[60%] bg-[#DF1516] flex flex-col items-center justify-start pt-48 p-16"
       >
+        <motion.h2
+          custom={0}
+          variants={fadeItem}
+          initial="hidden"
+          animate={rightControls}
+          className="text-[55px] font-bold text-white mb-2"
+        >
+          Welcome Back
+        </motion.h2>
+        <motion.p
+          custom={1}
+          variants={fadeItem}
+          initial="hidden"
+          animate={rightControls}
+          className="text-[21px] text-white/80 mb-8"
+        >
+          Sign in to continue
+        </motion.p>
+
+        <form onSubmit={handleSignIn} className="w-[80%] space-y-4">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={signInEmail}
+            onChange={(e) => setSignInEmail(e.target.value)}
+            required
+            className="h-[74px] text-[21px] rounded-none border-white/30 bg-white/10 text-white placeholder:text-white/60"
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={signInPassword}
+            onChange={(e) => setSignInPassword(e.target.value)}
+            required
+            className="h-[74px] text-[21px] rounded-none border-white/30 bg-white/10 text-white placeholder:text-white/60"
+          />
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-white text-[16px] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-5 h-5"
+              />
+              Remember me
+            </label>
+            <button
+              type="button"
+              onClick={() => navigate("/reset-password")}
+              className="text-white/80 hover:text-white text-[16px] underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-[74px] text-[23px] font-bold bg-white text-[#DF1516] hover:bg-gray-100 rounded-none"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </Button>
+        </form>
+
+        {/* Divider */}
+        <div className="flex items-center w-[80%] my-6">
+          <div className="flex-1 h-px bg-white/30" />
+          <span className="px-4 text-white/70 text-[18px]">or</span>
+          <div className="flex-1 h-px bg-white/30" />
+        </div>
+
+        {/* Google Sign In */}
         <button
           onClick={handleGoogle}
-          className="flex w-[80%] mx-auto mt-8 mb-6 rounded-none overflow-hidden"
+          className="flex w-[80%] mx-auto rounded-none overflow-hidden"
         >
           <div className="bg-white w-[80px] h-[80px] flex items-center justify-center">
             <FcGoogle size={42} />
