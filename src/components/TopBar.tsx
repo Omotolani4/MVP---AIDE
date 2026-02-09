@@ -1,147 +1,102 @@
-import { Settings, Bell } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
-export const TopBar = () => {
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+}
+
+export function TopBar() {
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const navigate = useNavigate();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  /* ---------------- FETCH NOTIFICATIONS ---------------- */
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setNotifications(data || []);
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    load();
+
+    // Realtime updates
+    const channel = supabase
+      .channel("notifications")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", table: "notifications" },
+        payload => {
+          setNotifications(prev => [payload.new as Notification, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, []);
 
-  const goToNotifications = () => {
-    setShowNotifications(false);
-    navigate("/notifications");
-  };
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div
-      ref={dropdownRef}
-      className="
-        fixed
-        top-4 md:top-[41px]
-        right-4 md:right-[30px]
-        z-[999]
-        flex
-        items-center
-        gap-3 md:gap-[20px]
-        pointer-events-auto
-      "
-    >
-      {/* SETTINGS */}
-      <button
-        onClick={() => navigate("/settings")}
-        className="w-[42.6px] h-[41px] flex items-center justify-center"
-      >
-        <Settings
-          style={{ width: "42.6px", height: "41px" }}
-          strokeWidth={2.4}
-          className="text-white"
-        />
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="relative">
+        <Bell className="w-7 h-7" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
+            {unreadCount}
+          </span>
+        )}
       </button>
 
-      {/* BELL */}
-      <button
-        onClick={() => setShowNotifications((prev) => !prev)}
-        className="relative w-[44px] h-[44px] flex items-center justify-center"
-      >
-        <Bell
-          style={{ width: "44px", height: "44px" }}
-          strokeWidth={2.4}
-          className="text-white"
-        />
-
-        {/* BADGE */}
-        <span
-          className="
-            absolute
-            top-[1px]
-            right-[1px]
-            w-[30px]
-            h-[25px]
-            bg-[#DF1516]
-            border
-            border-[#F3C17E]
-            rounded-full
-            flex
-            items-center
-            justify-center
-            text-white
-            text-[16px]
-            font-extrabold
-            leading-none
-          "
-        >
-          3
-        </span>
-      </button>
-
-      {/* 🔔 SLIDE-DOWN NOTIFICATION DROPDOWN */}
       <AnimatePresence>
-        {showNotifications && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{
-              duration: 0.28,
-              ease: [0.22, 1, 0.36, 1], // natural slide ease
-            }}
-            className="
-              absolute
-              top-[60px]
-              right-0
-              w-[320px]
-              bg-white
-              rounded-[20px]
-              shadow-2xl
-              border
-              z-[1000]
-              overflow-hidden
-            "
+            exit={{ opacity: 0, y: -12 }}
+            className="absolute right-0 mt-4 w-80 bg-white shadow-xl rounded-xl overflow-hidden z-50"
           >
-            <div className="px-5 py-4 border-b font-bold text-lg">
-              Notifications
-            </div>
+            <div className="p-4 font-bold border-b">Notifications</div>
 
-            <ul className="max-h-[280px] overflow-y-auto">
-              <li className="px-5 py-4 hover:bg-gray-50 cursor-pointer">
-                🔔 New assessment is available
-              </li>
-              <li className="px-5 py-4 hover:bg-gray-50 cursor-pointer">
-                ✅ Profile updated successfully
-              </li>
-              <li className="px-5 py-4 hover:bg-gray-50 cursor-pointer">
-                📚 New resource added to library
-              </li>
-            </ul>
+            {notifications.length === 0 ? (
+              <p className="p-4 text-sm text-muted-foreground">
+                No notifications yet
+              </p>
+            ) : (
+              notifications.slice(0, 5).map(n => (
+                <div
+                  key={n.id}
+                  className="p-4 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => navigate("/notifications")}
+                >
+                  <p className="font-semibold">{n.title}</p>
+                  <p className="text-sm text-muted-foreground">{n.message}</p>
+                </div>
+              ))
+            )}
 
-            <div className="px-5 py-3 border-t text-center">
-              <button
-                onClick={goToNotifications}
-                className="text-primary font-semibold hover:underline"
-              >
-                View all notifications
-              </button>
-            </div>
+            <button
+              className="w-full p-3 text-primary text-sm hover:underline"
+              onClick={() => navigate("/notifications")}
+            >
+              See all notifications
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-};
+}

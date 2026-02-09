@@ -21,6 +21,46 @@ interface ResourceCardProps {
 }
 
 function ResourceCard({ title, description, file, variant, delay }: ResourceCardProps) {
+  const navigate = useNavigate();
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Trigger the download
+    const link = document.createElement('a');
+    link.href = file;
+    link.download = file.split('/').pop() || 'resource';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Mark task 1 as complete
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("tasks").upsert({
+        id: "1",
+        user_id: user.id,
+        title: "Complete Awareness Journal",
+        completed: true,
+        completed_at: new Date().toISOString(),
+      });
+
+      // Create notification
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "Task Completed 🎉",
+        message: "You completed: Complete Awareness Journal",
+        type: "task",
+        read: false,
+      });
+    }
+
+    // Redirect back to tasks after a short delay
+    setTimeout(() => {
+      navigate("/tasks");
+    }, 500);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -34,11 +74,11 @@ function ResourceCard({ title, description, file, variant, delay }: ResourceCard
         <h3 className="text-lg md:text-xl font-medium font-montserrat">{title}</h3>
         <p className="mt-3 text-sm md:text-base font-montserrat">{description}</p>
       </div>
-      <a href={file} download className="mt-4">
+      <button onClick={handleDownload} className="mt-4">
         <Button className="bg-primary hover:bg-primary/90 text-white w-full md:w-auto px-6 py-2 rounded-2xl">
           Access Now
         </Button>
-      </a>
+      </button>
     </motion.div>
   );
 }
