@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { FcGoogle } from "react-icons/fc";
 import aideLogo from "@/assets/aide-logo.png";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,18 +36,13 @@ export default function Auth() {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event !== "SIGNED_IN" || !session?.user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
-        .select("onboarding_complete")
+        .select("id")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error(error);
-        return;
-      }
-
-      if (data.onboarding_complete) {
+      if (data) {
         navigate("/dashboard", { replace: true });
       } else {
         navigate("/quiz-step2", { replace: true });
@@ -186,11 +182,8 @@ export default function Auth() {
   const handleGoogle = async () => {
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth`,
-      },
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
 
     if (error) {
