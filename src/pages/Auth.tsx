@@ -55,34 +55,42 @@ export default function Auth() {
             });
           }
 
-          // Small delay to ensure session is fully established
-          setTimeout(() => {
-            if (!profile) {
-              // New user (no profile yet) - go to quiz flow
-              navigate("/quiz-step2");
-            } else {
-              // Existing user - go to dashboard
-              navigate("/dashboard");
-            }
-          }, 100);
+          // Navigate immediately without delay
+          if (!profile) {
+            // New user (no profile yet) - go to quiz flow
+            navigate("/quiz-step2");
+          } else {
+            // Existing user - go to dashboard
+            navigate("/dashboard");
+          }
         } catch (err) {
-          console.error("Error handling auth state:", err);
+          // Silently redirect to dashboard on error
           navigate("/dashboard");
         }
       }
     });
 
     // Check existing session AFTER listener is set up
+    let mounted = true;
+    
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        navigate("/dashboard");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted && session?.user) {
+          navigate("/dashboard");
+        }
+      } catch (err) {
+        // Session check failed, continue normally
       }
     };
+    
     checkSession();
 
-    return () => subscription.unsubscribe();
-  }, [navigate, isSigningUp]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   /** AUTO-SCALING */
   useEffect(() => {
@@ -227,8 +235,6 @@ export default function Auth() {
         ? "http://localhost:8080/auth"
         : `${window.location.origin}/auth`;
 
-      console.log("Attempting Google OAuth with redirect:", redirectUrl);
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -238,13 +244,11 @@ export default function Auth() {
       });
 
       if (error) {
-        console.error("Google OAuth error:", error);
         throw new Error(error.message || "Failed to initiate Google Sign In");
       }
       // Note: User will be redirected to Google auth, then back to /auth
       // The auth state listener will handle navigation
     } catch (error) {
-      console.error("Google Sign In error details:", error);
       const errorMsg = error instanceof Error 
         ? error.message 
         : "Please check that:\n1. Google OAuth is enabled in Supabase\n2. Redirect URL is configured correctly\n3. You have valid Google OAuth credentials";
