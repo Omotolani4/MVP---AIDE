@@ -27,14 +27,16 @@ const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <TidioWidget />
-        <AppRoutes />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <TidioWidget />
+          <AppRoutes />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 };
 
@@ -45,8 +47,7 @@ const AppRoutes = () => {
   return (
     <>
       {!isAuthPage && <TidioChatButton />}
-      <BrowserRouter>
-        <Routes>
+      <Routes>
           {/* ===== PUBLIC / NO LAYOUT ===== */}
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -80,9 +81,8 @@ const AppRoutes = () => {
           {/* ===== FALLBACK ===== */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </>
-  );
-};
+      </>
+    );
+  };
 
 export default App;
