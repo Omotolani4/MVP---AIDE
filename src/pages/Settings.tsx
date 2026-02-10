@@ -2,8 +2,28 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast({ title: "Logged out successfully" });
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="flex min-h-screen bg-primary relative">
       <Sidebar showTasksAndResources />
@@ -38,9 +58,18 @@ export default function Settings() {
               Update your email, password, or notification settings below.
             </p>
 
-            <Button className="bg-primary text-white hover:bg-primary/90 h-14 px-10 font-bold rounded-full">
-              Update Settings
-            </Button>
+            <div className="flex gap-4">
+              <Button className="bg-primary text-white hover:bg-primary/90 h-14 px-10 font-bold rounded-full">
+                Update Settings
+              </Button>
+              <Button
+                onClick={handleLogout}
+                variant="destructive"
+                className="h-14 px-10 font-bold rounded-full"
+              >
+                Logout
+              </Button>
+            </div>
           </motion.div>
         </div>
       </main>

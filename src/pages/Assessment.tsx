@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 export default function Assessment() {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -28,6 +29,12 @@ export default function Assessment() {
     };
 
     fetchProfile();
+
+    // Check if user has already completed the quiz
+    const quizCount = parseInt(localStorage.getItem("quizCompletions") || "0");
+    if (quizCount > 0) {
+      setQuizCompleted(true);
+    }
   }, [navigate]);
 
   return (
@@ -59,12 +66,20 @@ export default function Assessment() {
           This assessment takes less than 5 minutes and helps us personalize your growth experience.
         </p>
 
-        <Button
-          onClick={() => navigate("/quiz-step2")}
-          className="mt-8 bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary px-10 py-4 rounded-2xl text-lg md:text-xl"
-        >
-          Take Assessment
-        </Button>
+        {quizCompleted ? (
+          <div className="mt-8 px-10 py-4 rounded-2xl bg-green-100 border-2 border-green-500">
+            <p className="text-lg md:text-xl font-semibold text-green-700">
+              ✓ Assessment Completed
+            </p>
+          </div>
+        ) : (
+          <Button
+            onClick={() => navigate("/quiz-step2")}
+            className="mt-8 bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary px-10 py-4 rounded-2xl text-lg md:text-xl"
+          >
+            Take Assessment
+          </Button>
+        )}
       </motion.div>
 
       {/* Quick Tips */}

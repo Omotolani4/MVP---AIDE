@@ -46,7 +46,7 @@ export default function Analytics() {
   // Load analytics data from localStorage
   useEffect(() => {
     // Load quiz completions
-    const quizCompletions = JSON.parse(localStorage.getItem("quizCompletions") || "0");
+    const quizCompletions = parseInt(localStorage.getItem("quizCompletions") || "0");
     setAssessmentCount(quizCompletions);
 
     // Load completed tasks

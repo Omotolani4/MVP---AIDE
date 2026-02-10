@@ -57,8 +57,8 @@ export default function Auth() {
 
           // Small delay to ensure session is fully established
           setTimeout(() => {
-            if (!profile && !isSigningUp) {
-              // New OAuth user - go to quiz flow
+            if (!profile) {
+              // New user (no profile yet) - go to quiz flow
               navigate("/quiz-step2");
             } else {
               // Existing user - go to dashboard
@@ -165,14 +165,20 @@ export default function Auth() {
           first_name: firstName,
           last_name: lastName,
         }).single();
+        
+        // Navigate to quiz flow after profile is created
+        setTimeout(() => {
+          navigate("/quiz-step2");
+        }, 300);
       }
 
       toast({ title: "Account created successfully!" });
-    } catch (error: any) {
+    } catch (error) {
       setIsSigningUp(false);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -200,10 +206,11 @@ export default function Auth() {
       }
 
       toast({ title: "Welcome back!" });
-    } catch (error: any) {
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
         title: "Sign in failed",
-        description: error.message,
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -236,11 +243,14 @@ export default function Auth() {
       }
       // Note: User will be redirected to Google auth, then back to /auth
       // The auth state listener will handle navigation
-    } catch (error: any) {
+    } catch (error) {
       console.error("Google Sign In error details:", error);
+      const errorMsg = error instanceof Error 
+        ? error.message 
+        : "Please check that:\n1. Google OAuth is enabled in Supabase\n2. Redirect URL is configured correctly\n3. You have valid Google OAuth credentials";
       toast({
         title: "Google Sign In failed",
-        description: error?.message || "Please check that:\n1. Google OAuth is enabled in Supabase\n2. Redirect URL is configured correctly\n3. You have valid Google OAuth credentials",
+        description: errorMsg,
         variant: "destructive",
       });
       setLoading(false);

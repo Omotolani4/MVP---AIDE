@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import AppLayout from "@/layouts/AppLayout";
 import { TidioWidget, TidioChatButton } from "@/components/TidioWidget";
+import { useLocation } from "react-router-dom";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -23,14 +24,26 @@ import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <TidioWidget />
-      <TidioChatButton />
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <TidioWidget />
+        <AppRoutes />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
+const AppRoutes = () => {
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/auth";
+
+  return (
+    <>
+      {!isAuthPage && <TidioChatButton />}
       <BrowserRouter>
         <Routes>
           {/* ===== PUBLIC / NO LAYOUT ===== */}
@@ -66,8 +79,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </>
+  );
+};
 
 export default App;

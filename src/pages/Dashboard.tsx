@@ -53,7 +53,7 @@ export default function Dashboard({ showQuizPrompt = false }: DashboardProps) {
         className="hover-bubble bg-white rounded-2xl shadow-lg p-6 md:p-8"
       >
         <h1 className="text-2xl md:text-4xl font-normal" style={{ fontFamily: "Arial" }}>
-          Welcome, <span className="text-primary">{firstName || "Name"}!</span>
+          Welcome, <span className="text-primary">{firstName}!</span>
         </h1>
         <p className="mt-3 text-base md:text-xl font-montserrat">
           Moving From Stuck & Stagnant to Clear & Confident.
