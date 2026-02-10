@@ -217,7 +217,7 @@ export default function Auth() {
     try {
       // Get the correct redirect URL based on environment
       const redirectUrl = import.meta.env.DEV 
-        ? "http://localhost:5173/auth"
+        ? "http://localhost:8080/auth"
         : `${window.location.origin}/auth`;
 
       console.log("Attempting Google OAuth with redirect:", redirectUrl);
