@@ -11,6 +11,25 @@ export default function Submission() {
   const [showSupportModal, setShowSupportModal] = useState(false);
   const navigate = useNavigate();
 
+  const handleStartJourney = () => {
+    // Track quiz completion
+    const quizCompletions = parseInt(localStorage.getItem("quizCompletions") || "0");
+    const newCount = quizCompletions + 1;
+    localStorage.setItem("quizCompletions", newCount.toString());
+
+    // Log activity
+    const activities = JSON.parse(localStorage.getItem("activities") || "[]");
+    activities.push({
+      id: `quiz-${Date.now()}`,
+      type: "quiz",
+      title: "Assessment Module",
+      timestamp: Date.now(),
+    });
+    localStorage.setItem("activities", JSON.stringify(activities));
+
+    navigate("/dashboard");
+  };
+
   return (
     <LockedCanvas>
       {/* LOGO (kept absolute like other pages) */}
@@ -74,7 +93,7 @@ export default function Submission() {
             className="w-[65%] max-w-[650px]"
           >
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={handleStartJourney}
               className="
                 w-full
                 h-[116px]

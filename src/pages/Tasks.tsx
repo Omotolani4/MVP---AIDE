@@ -44,12 +44,15 @@ const initialTasks: Task[] = [
 export default function Tasks() {
   const [firstName, setFirstName] = useState("");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return navigate("/auth");
+
+      setUserId(user.id);
 
       const { data } = await supabase
         .from("profiles")
@@ -59,6 +62,15 @@ export default function Tasks() {
 
       if (data?.first_name) setFirstName(data.first_name);
 
+      // Load completed tasks from localStorage
+      const completedTasks = JSON.parse(localStorage.getItem("completedTasks") || "[]");
+      setTasks(prev => 
+        prev.map(task => ({
+          ...task,
+          completed: completedTasks.includes(task.id)
+        }))
+      );
+
       // Check if returning from resources page with a download completed
       const resourceDownloadCompleted = localStorage.getItem("resourceDownloadCompleted");
       if (resourceDownloadCompleted === "true") {
@@ -67,6 +79,8 @@ export default function Tasks() {
           prev.map(task => {
             if (task.id === "1" && !task.completed) {
               toast.success(`Task completed: ${task.title}`);
+              // Persist to localStorage
+              persistTaskCompletion(user.id, "1", task.title);
               return { ...task, completed: true };
             }
             return task;
@@ -78,9 +92,32 @@ export default function Tasks() {
     fetchProfile();
   }, [navigate]);
 
+  const persistTaskCompletion = async (uid: string, taskId: string, taskTitle: string) => {
+    try {
+      // Store in localStorage for Dashboard to read
+      const completedTasks = JSON.parse(localStorage.getItem("completedTasks") || "[]");
+      if (!completedTasks.includes(taskId)) {
+        completedTasks.push(taskId);
+        localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
+      }
+
+      // Log activity
+      const activities = JSON.parse(localStorage.getItem("activities") || "[]");
+      activities.push({
+        id: `task-${taskId}-${Date.now()}`,
+        type: "task",
+        title: taskTitle,
+        timestamp: Date.now(),
+      });
+      localStorage.setItem("activities", JSON.stringify(activities));
+    } catch (err) {
+      console.error("Error persisting task:", err);
+    }
+  };
+
   const toggleTask = (id: string) => {
     const task = tasks.find(t => t.id === id);
-    if (!task) return;
+    if (!task || !userId) return;
 
     // Task 1: Open Resources page
     if (id === "1") {
@@ -97,6 +134,8 @@ export default function Tasks() {
           prev.map(t => {
             if (t.id === id && !t.completed) {
               toast.success(`Task completed: ${t.title}`);
+              // Persist to database
+              persistTaskCompletion(userId, id, t.title);
               return { ...t, completed: true };
             }
             return t;

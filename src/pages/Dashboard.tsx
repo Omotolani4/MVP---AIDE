@@ -26,17 +26,21 @@ export default function Dashboard({ showQuizPrompt = false }: DashboardProps) {
 
       if (profile?.first_name) setFirstName(profile.first_name);
 
-      const { data: tasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .eq("completed", true);
-
-      // Only count up to the 4 tracked tasks and default to 0 when none completed
-      if (tasks) setCompletedTasks(Math.min((tasks as any[]).length, 4));
+      // Read completed tasks from localStorage
+      const completedTasks = JSON.parse(localStorage.getItem("completedTasks") || "[]");
+      setCompletedTasks(Math.min(completedTasks.length, 4));
     };
 
     fetchData();
+
+    // Listen for storage changes to update in real-time
+    const handleStorageChange = () => {
+      const completedTasks = JSON.parse(localStorage.getItem("completedTasks") || "[]");
+      setCompletedTasks(Math.min(completedTasks.length, 4));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   return (
