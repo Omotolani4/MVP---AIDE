@@ -58,27 +58,55 @@ export default function Tasks() {
         .single();
 
       if (data?.first_name) setFirstName(data.first_name);
+
+      // Check if returning from resources page with a download completed
+      const resourceDownloadCompleted = localStorage.getItem("resourceDownloadCompleted");
+      if (resourceDownloadCompleted === "true") {
+        localStorage.removeItem("resourceDownloadCompleted");
+        setTasks(prev =>
+          prev.map(task => {
+            if (task.id === "1" && !task.completed) {
+              toast.success(`Task completed: ${task.title}`);
+              return { ...task, completed: true };
+            }
+            return task;
+          })
+        );
+      }
     };
 
     fetchProfile();
   }, [navigate]);
 
-  // Compute progress for dashboard
-  const completedCount = tasks.filter(t => t.completed).length;
-  const progressPercent = Math.round((completedCount / tasks.length) * 100);
-
   const toggleTask = (id: string) => {
-    setTasks(prev =>
-      prev.map(task => {
-        if (task.id === id && !task.completed) {
-          toast.success(`Task completed: ${task.title}`);
-        }
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
 
-        return task.id === id
-          ? { ...task, completed: !task.completed }
-          : task;
-      })
-    );
+    // Task 1: Open Resources page
+    if (id === "1") {
+      navigate("/resources");
+      return;
+    }
+
+    // Tasks 2, 3, 4: Open Google Tasks in new tab
+    if (id === "2" || id === "3" || id === "4") {
+      const googleTasksWindow = window.open("https://tasks.google.com", "GoogleTasks");
+      if (googleTasksWindow) {
+        // Mark as completed if window opened successfully
+        setTasks(prev =>
+          prev.map(t => {
+            if (t.id === id && !t.completed) {
+              toast.success(`Task completed: ${t.title}`);
+              return { ...t, completed: true };
+            }
+            return t;
+          })
+        );
+      } else {
+        toast.error("Failed to open Google Tasks. Please check popup blocker settings.");
+      }
+      return;
+    }
   };
 
   return (
@@ -112,7 +140,8 @@ export default function Tasks() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.15 + index * 0.1 }}
-              className="flex items-start gap-4"
+              onClick={() => toggleTask(task.id)}
+              className="flex items-start gap-4 cursor-pointer group transition-transform hover:scale-105"
             >
               <Checkbox
                 checked={task.completed}
@@ -120,10 +149,10 @@ export default function Tasks() {
                 className="mt-1 h-6 w-6 border-2 border-foreground"
               />
               <div className="flex-1">
-                <h3 className="text-lg md:text-xl font-medium font-montserrat">
+                <h3 className="text-lg md:text-xl font-medium font-montserrat transition-all duration-200 group-hover:text-xl md:group-hover:text-2xl">
                   {task.title}
                 </h3>
-                <p className="mt-1 text-sm md:text-base font-montserrat text-muted-foreground">
+                <p className="mt-1 text-sm md:text-base font-montserrat text-muted-foreground transition-all duration-200 group-hover:text-base md:group-hover:text-lg">
                   {task.description}
                 </p>
               </div>

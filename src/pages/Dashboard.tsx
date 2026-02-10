@@ -80,7 +80,7 @@ export default function Dashboard({ showQuizPrompt = false }: DashboardProps) {
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-          onClick={() => window.open("https://calendar.google.com")}
+          onClick={() => (window.location.href = "https://tasks.google.com")}
           className="hover-bubble border-2 border-secondary p-6 md:p-8 cursor-pointer"
         >
           <h3 className="text-xl md:text-2xl font-bold font-montserrat text-white">Daily Prompt</h3>

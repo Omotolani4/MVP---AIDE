@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const RESOURCES = {
   mindset: "/pdfs/mindset-reset-guide.pdf",
@@ -18,9 +19,22 @@ interface ResourceCardProps {
   file: string;
   variant: "primary" | "secondary";
   delay: number;
+  onDownload: () => void;
 }
 
-function ResourceCard({ title, description, file, variant, delay }: ResourceCardProps) {
+function ResourceCard({ title, description, file, variant, delay, onDownload }: ResourceCardProps) {
+  const handleDownload = () => {
+    onDownload();
+    // Trigger the download
+    const link = document.createElement("a");
+    link.href = file;
+    link.download = file.split("/").pop() || "resource";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Resource downloaded! Task 1 completed.");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -34,11 +48,11 @@ function ResourceCard({ title, description, file, variant, delay }: ResourceCard
         <h3 className="text-lg md:text-xl font-medium font-montserrat">{title}</h3>
         <p className="mt-3 text-sm md:text-base font-montserrat">{description}</p>
       </div>
-      <a href={file} download className="mt-4">
+      <button onClick={handleDownload} className="mt-4">
         <Button className="bg-primary hover:bg-primary/90 text-white w-full md:w-auto px-6 py-2 rounded-2xl">
           Access Now
         </Button>
-      </a>
+      </button>
     </motion.div>
   );
 }
@@ -70,6 +84,10 @@ export default function Resources() {
     fetchProfile();
   }, [navigate]);
 
+  const handleDownload = () => {
+    localStorage.setItem("resourceDownloadCompleted", "true");
+  };
+
   return (
     <PageLayout>
       {/* Header */}
@@ -95,6 +113,7 @@ export default function Resources() {
           file={RESOURCES.mindset}
           variant="primary"
           delay={0.15}
+          onDownload={handleDownload}
         />
         <ResourceCard
           title="Business Growth Blueprint"
@@ -102,6 +121,7 @@ export default function Resources() {
           file={RESOURCES.growth}
           variant="secondary"
           delay={0.25}
+          onDownload={handleDownload}
         />
         <ResourceCard
           title="Execution Masterclass"
@@ -109,6 +129,7 @@ export default function Resources() {
           file={RESOURCES.execution}
           variant="secondary"
           delay={0.35}
+          onDownload={handleDownload}
         />
         <ResourceCard
           title="Leadership & Influence Playbook"
@@ -116,6 +137,7 @@ export default function Resources() {
           file={RESOURCES.leadership}
           variant="primary"
           delay={0.45}
+          onDownload={handleDownload}
         />
       </div>
 
@@ -134,6 +156,15 @@ export default function Resources() {
           <li>• Break goals into smaller steps.</li>
           <li>• Review wins weekly.</li>
         </ul>
+
+        <div className="mt-6 flex justify-start">
+          <Button
+            onClick={() => navigate("/tasks")}
+            className="bg-white text-primary hover:bg-gray-100 px-6 py-2 rounded-2xl font-medium"
+          >
+            Back to Tasks
+          </Button>
+        </div>
       </motion.div>
     </PageLayout>
   );
