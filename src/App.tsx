@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import Tasks from "./pages/Tasks";
 import Resources from "./pages/Resources";
 import Analytics from "./pages/Analytics";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const AppRoutes = () => {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/resources" element={<Resources />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/notifications" element={<Notifications />} />
           </Route>
 
           {/* ===== FALLBACK ===== */}
