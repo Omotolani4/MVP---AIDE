@@ -52,9 +52,9 @@ export const SupportModal = ({ open, onOpenChange }: SupportModalProps) => {
     }
   };
 
-  const handleOpenChat = () => {
+  const handleOpenChat = async () => {
     onOpenChange(false);
-    openTidioChat();
+    await openTidioChat();
   };
 
   const handleBack = () => {
