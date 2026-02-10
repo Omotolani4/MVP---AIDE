@@ -27,6 +27,17 @@ export default function Submission() {
     });
     localStorage.setItem("activities", JSON.stringify(activities));
 
+    // Add notification
+    const notifications = JSON.parse(localStorage.getItem("notifications") || "[]");
+    notifications.push({
+      id: `notif-quiz-${Date.now()}`,
+      message: "📝 Completed assessment module",
+      timestamp: Date.now(),
+      type: "quiz",
+      read: false,
+    });
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+
     navigate("/dashboard");
   };
 

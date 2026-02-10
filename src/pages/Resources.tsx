@@ -32,6 +32,18 @@ function ResourceCard({ title, description, file, variant, delay, onDownload }: 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    // Add notification
+    const notifications = JSON.parse(localStorage.getItem("notifications") || "[]");
+    notifications.push({
+      id: `notif-resource-${Date.now()}`,
+      message: `📚 Downloaded resource: "${title}"`,
+      timestamp: Date.now(),
+      type: "resource",
+      read: false,
+    });
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+
     toast.success("Resource downloaded! Task 1 completed.");
   };
 
@@ -48,11 +60,13 @@ function ResourceCard({ title, description, file, variant, delay, onDownload }: 
         <h3 className="text-lg md:text-xl font-medium font-montserrat">{title}</h3>
         <p className="mt-3 text-sm md:text-base font-montserrat">{description}</p>
       </div>
-      <button onClick={handleDownload} className="mt-4">
-        <Button className="bg-primary hover:bg-primary/90 text-white w-full md:w-auto px-6 py-2 rounded-2xl">
-          Access Now
-        </Button>
-      </button>
+      <div className="mt-4">
+        <button onClick={handleDownload}>
+          <Button className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-2xl">
+            Access Now
+          </Button>
+        </button>
+      </div>
     </motion.div>
   );
 }

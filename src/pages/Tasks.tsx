@@ -110,6 +110,17 @@ export default function Tasks() {
         timestamp: Date.now(),
       });
       localStorage.setItem("activities", JSON.stringify(activities));
+
+      // Add notification
+      const notifications = JSON.parse(localStorage.getItem("notifications") || "[]");
+      notifications.push({
+        id: `notif-task-${taskId}-${Date.now()}`,
+        message: `✓ Completed task: "${taskTitle}"`,
+        timestamp: Date.now(),
+        type: "task",
+        read: false,
+      });
+      localStorage.setItem("notifications", JSON.stringify(notifications));
     } catch (err) {
       console.error("Error persisting task:", err);
     }

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { FcGoogle } from "react-icons/fc";
 import aideLogo from "@/assets/aide-logo.png";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,23 +33,42 @@ export default function Auth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        // Check if user has a profile (existing user) or not (new user)
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", session.user.id)
-          .single();
+        try {
+          // Check if user has a profile (existing user) or not (new user)
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", session.user.id)
+            .single();
 
-        // Small delay to ensure session is fully established
-        setTimeout(() => {
-          if (!profile || isSigningUp) {
-            // New user - go to quiz flow
-            navigate("/quiz-step2");
-          } else {
-            // Existing user - go to dashboard
-            navigate("/dashboard");
+          // If no profile exists (new user), create one with their OAuth data
+          if (!profile) {
+            const firstName = session.user.user_metadata?.first_name 
+              || session.user.email?.split("@")[0] 
+              || "User";
+            const lastName = session.user.user_metadata?.last_name || "";
+
+            await supabase.from("profiles").insert({
+              id: session.user.id,
+              first_name: firstName,
+              last_name: lastName,
+            });
           }
-        }, 100);
+
+          // Small delay to ensure session is fully established
+          setTimeout(() => {
+            if (!profile && !isSigningUp) {
+              // New OAuth user - go to quiz flow
+              navigate("/quiz-step2");
+            } else {
+              // Existing user - go to dashboard
+              navigate("/dashboard");
+            }
+          }, 100);
+        } catch (err) {
+          console.error("Error handling auth state:", err);
+          navigate("/dashboard");
+        }
       }
     });
 
@@ -129,7 +147,7 @@ export default function Auth() {
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
 
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: signUpEmail,
         password: signUpPassword,
         options: {
@@ -138,7 +156,16 @@ export default function Auth() {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
+
+      // Create user profile immediately
+      if (authData.user) {
+        await supabase.from("profiles").insert({
+          id: authData.user.id,
+          first_name: firstName,
+          last_name: lastName,
+        }).single();
+      }
 
       toast({ title: "Account created successfully!" });
     } catch (error: any) {
@@ -188,15 +215,32 @@ export default function Auth() {
   const handleGoogle = async () => {
     setLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
+      // Get the correct redirect URL based on environment
+      const redirectUrl = import.meta.env.DEV 
+        ? "http://localhost:5173/auth"
+        : `${window.location.origin}/auth`;
+
+      console.log("Attempting Google OAuth with redirect:", redirectUrl);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+        },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Google OAuth error:", error);
+        throw new Error(error.message || "Failed to initiate Google Sign In");
+      }
+      // Note: User will be redirected to Google auth, then back to /auth
+      // The auth state listener will handle navigation
     } catch (error: any) {
+      console.error("Google Sign In error details:", error);
       toast({
         title: "Google Sign In failed",
-        description: error.message,
+        description: error?.message || "Please check that:\n1. Google OAuth is enabled in Supabase\n2. Redirect URL is configured correctly\n3. You have valid Google OAuth credentials",
         variant: "destructive",
       });
       setLoading(false);
