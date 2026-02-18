@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +12,31 @@ import { SupportModal } from "@/components/SupportModal";
 
 export default function Quiz() {
   const navigate = useNavigate();
+
   const [question1, setQuestion1] = useState("");
   const [question2, setQuestion2] = useState("");
   const [question3, setQuestion3] = useState("");
   const [showSupportModal, setShowSupportModal] = useState(false);
+
+  const [scale, setScale] = useState(1);
+
+  // 🔹 Auto scale based on screen height
+  useEffect(() => {
+    const calculateScale = () => {
+      const height = window.innerHeight;
+
+      if (height < 720) return setScale(0.88);
+      if (height < 800) return setScale(0.92);
+      if (height < 900) return setScale(0.96);
+
+      setScale(1);
+    };
+
+    calculateScale();
+    window.addEventListener("resize", calculateScale);
+
+    return () => window.removeEventListener("resize", calculateScale);
+  }, []);
 
   const handleSubmit = () => {
     if (!question1 || !question2 || !question3.trim()) {
@@ -33,9 +54,8 @@ export default function Quiz() {
 
   return (
     <div className="flex h-screen font-['Poppins'] overflow-hidden">
-      {/* ONBOARDING SIDEBAR */}
+      {/* SIDEBAR */}
       <div className="hidden md:flex flex-col justify-between bg-white w-[240px] rounded-r-[40px] p-6 shadow-lg">
-        {/* Logo */}
         <div className="flex flex-col items-center text-center">
           <img src={aideLogo} alt="AIDE Logo" className="h-14 mb-3" />
           <p className="text-[13px] text-gray-800 font-semibold leading-tight">
@@ -43,9 +63,8 @@ export default function Quiz() {
           </p>
         </div>
 
-        {/* SUPPORT — SAME AS APP */}
         <div
-          className="flex items-center gap-3 justify-center cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 justify-center cursor-pointer hover:opacity-80"
           onClick={() => setShowSupportModal(true)}
         >
           <img
@@ -64,15 +83,16 @@ export default function Quiz() {
         onOpenChange={setShowSupportModal}
       />
 
-      {/* MAIN QUIZ SECTION */}
+      {/* MAIN SECTION */}
       <motion.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
-        className="flex-1 bg-primary relative flex flex-col justify-center items-center p-6 md:p-12"
+        style={{ transform: `scale(${scale})` }}
+        className="flex-1 bg-primary relative flex flex-col justify-center items-center p-6 origin-center transition-transform duration-300"
       >
-        {/* SETTINGS BUTTON — BIGGER */}
-        <div className="absolute top-8 right-8 z-10">
+        {/* SETTINGS */}
+        <div className="absolute top-6 right-6 z-10">
           <Button
             variant="ghost"
             size="icon"
@@ -83,22 +103,21 @@ export default function Quiz() {
           </Button>
         </div>
 
-        {/* CONTENT CONTAINER */}
-        <div className="flex flex-col justify-between items-center w-full max-w-[850px] min-h-[85vh] gap-6">
+        {/* CONTENT */}
+        <div className="flex flex-col justify-between items-center w-full max-w-[850px] gap-5">
           {/* TITLE */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="bg-white rounded-3xl p-8 w-full shadow-[0_4px_25px_rgba(0,0,0,0.1)]"
+            className="bg-white rounded-3xl p-7 w-full shadow-[0_4px_25px_rgba(0,0,0,0.1)]"
           >
-            <h1 className="text-4xl font-bold text-center mb-2 text-foreground">
+            <h1 className="text-3xl font-bold text-center mb-2">
               AIDE Onboarding Quiz
             </h1>
-            <p className="text-lg text-muted-foreground text-center">
+            <p className="text-base text-muted-foreground text-center">
               Answer a few quick questions so we can personalize your roadmap.
             </p>
-
             <p className="text-center text-sm text-gray-500 mt-2 font-medium">
               Step <span className="text-primary font-bold">1</span> of 2
             </p>
@@ -109,12 +128,12 @@ export default function Quiz() {
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="bg-white p-8 w-full shadow-[0_4px_25px_rgba(0,0,0,0.1)] flex flex-col justify-between"
+            className="bg-white p-7 w-full shadow-[0_4px_25px_rgba(0,0,0,0.1)] flex flex-col justify-between"
           >
-            <div className="grid gap-7">
+            <div className="grid gap-6">
               {/* Q1 */}
               <div>
-                <h3 className="text-xl font-semibold mb-4">
+                <h3 className="text-lg font-semibold mb-3">
                   1. What stage best describes your business?
                 </h3>
                 <div className="flex flex-wrap gap-4">
@@ -123,7 +142,7 @@ export default function Quiz() {
                       key={option}
                       onClick={() => setQuestion1(option)}
                       className={cn(
-                        "h-12 px-6 rounded-none border-[1.5px] border-[#ff000033]",
+                        "h-11 px-6 rounded-none border-[1.5px] border-[#ff000033]",
                         question1 === option
                           ? "bg-secondary"
                           : "bg-white hover:bg-[#F3C17E]"
@@ -137,7 +156,7 @@ export default function Quiz() {
 
               {/* Q2 */}
               <div>
-                <h3 className="text-xl font-semibold mb-4">
+                <h3 className="text-lg font-semibold mb-3">
                   2. What's your biggest challenge right now?
                 </h3>
                 <div className="flex flex-wrap gap-4">
@@ -147,7 +166,7 @@ export default function Quiz() {
                         key={option}
                         onClick={() => setQuestion2(option)}
                         className={cn(
-                          "h-12 px-6 rounded-[2px] border-[1.5px] border-[#ff000033]",
+                          "h-11 px-6 border-[1.5px] border-[#ff000033]",
                           question2 === option
                             ? "bg-secondary"
                             : "bg-white hover:bg-[#F3C17E]"
@@ -162,7 +181,7 @@ export default function Quiz() {
 
               {/* Q3 */}
               <div>
-                <h3 className="text-xl font-semibold mb-4">
+                <h3 className="text-lg font-semibold mb-3">
                   3. What's your main goal for the next 90 days?
                 </h3>
                 <Textarea
@@ -174,8 +193,7 @@ export default function Quiz() {
               </div>
             </div>
 
-            {/* NEXT */}
-            <div className="flex justify-end mt-5">
+            <div className="flex justify-end mt-4">
               <button
                 onClick={handleSubmit}
                 className="text-primary text-lg font-bold hover:underline transition-all hover:scale-[1.03]"
