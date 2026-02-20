@@ -87,14 +87,11 @@ export default function Quiz() {
 
           <div className="w-full max-w-[850px] flex flex-col gap-6">
             <div className="bg-white p-7 rounded-3xl shadow-lg">
-              <h1 className="text-3xl font-bold text-center">
+              <h1 className="text-3xl font-bold">
                 AIDE Onboarding Quiz
               </h1>
-              <p className="text-center text-muted-foreground">
+              <p className="text-muted-foreground mt-2">
                 Answer a few quick questions so we can personalize your roadmap.
-              </p>
-              <p className="text-center text-sm text-gray-500 mt-2">
-                Step <span className="text-primary font-bold">1</span> of 2
               </p>
             </div>
 
@@ -104,7 +101,7 @@ export default function Quiz() {
                   1. What stage best describes your business?
                 </h3>
                 <div className="flex gap-4 flex-wrap">
-                  {["Ideal Stage", "Early Growth", "Scaling"].map((opt) => (
+                  {["Idea Stage", "Early Growth", "Scaling"].map((opt) => (
                     <Button
                       key={opt}
                       onClick={() => setQuestion1(opt)}
