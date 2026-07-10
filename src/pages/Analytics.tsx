@@ -146,7 +146,7 @@ export default function Analytics() {
       >
         <div className="bg-white py-4 px-4 md:px-5 hover-bubble shadow-lg">
           <h3 className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
-            Assessment Completed
+            Assessment Completed Fully
           </h3>
           <p className="text-3xl md:text-5xl font-bold text-foreground">{assessmentCount}</p>
         </div>
